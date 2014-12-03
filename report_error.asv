@@ -1,0 +1,8 @@
+function error = report_error(error_code)
+error = error_code;
+if (error_code == 0)
+    print("Warning: Number of iterations exceeded.");
+else if()
+    of -2 do print("Warning: The problem is infeasible."); break
+    of -4 do print("Warning: Ill-conditioning prevents futher optimization"); break
+end

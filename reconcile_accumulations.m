@@ -1,0 +1,22 @@
+function accumulation = reconcile_accumulations(total_rows, ORIG_to_FINAL, ACC_ORIG)
+%input: an integer indicating the total number of rows that the final
+% accumulation matrix will have
+% a 2d array ORIG_to_FINAL that specifies which row in the original
+% accumulation matrix will be the new row in the final accumulation matrix
+% thus, the first element of each row is the row number in the original
+% matrix and the second row number is the row numbe in the final matrix
+
+%find the columns of the final matrix
+[~,nColumns] = size(ACC_ORIG);
+
+%now that we have the dimensions, build it
+accumulation = zeros( [total_rows, nColumns] );
+
+[nRows,~] = size(ORIG_to_FINAL);
+for rowI = 1:nRows
+    originalI = ORIG_to_FINAL(rowI,1);
+    newI = ORIG_to_FINAL(rowI,2);
+    accumulation(newI,:) = ACC_ORIG(originalI,:);
+end
+
+end

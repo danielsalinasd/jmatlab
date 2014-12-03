@@ -1,0 +1,13 @@
+function [fluxes, resnorm, residual, exitflag, output] = get_fluxes(SM, ACC, FU, FL, A, b, Aeq, beq)
+% modify the matrix so that only the linearly independent columns remain.
+% this reduces the number of variables so that the problem becomes more
+% defined.
+[SM_independent, indcols] = licols(SM);
+
+% once we have a reduced matrix, use compute_fluxes with no constraints and
+% no bounds. compute_fluxes minimizes difference between SM v = ACC over
+% possible flux values v
+[fluxes, resnorm, residual, exitflag, output] = compute_flux(SM_independent, ACC, FU, FL, A, b, Aeq, beq);
+
+% report the error
+end
