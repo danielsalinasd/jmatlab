@@ -1,0 +1,3 @@
+-Xms256m -Xmx2048m
+# only the first line of this file is used by CNA when 
+# calling EFM Tool
