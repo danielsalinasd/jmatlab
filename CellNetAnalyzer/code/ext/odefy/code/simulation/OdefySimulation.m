@@ -50,7 +50,7 @@ if type<=3
     end
     % prepare temporary ODE model files
     tmpfull = strrep([tempname() '.m'],'-','_'); % replacement because octave likes to generate temp files names with a minus sign
-    [tmppath, tmpname, tmpext, tmpversn] = fileparts(tmpfull);
+    [tmppath, tmpname] = fileparts(tmpfull);
     % go to that temp directory
     lwd = pwd;
     eval(['cd ' tmppath]);

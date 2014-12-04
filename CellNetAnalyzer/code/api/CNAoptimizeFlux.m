@@ -40,8 +40,9 @@ function [flux_vec, success, status]= CNAoptimizeFlux(cnap, constraints, c_macro
 %     (default: cnap.macroDefault)
 %
 %   solver: selects the LP solver
-%     0: GLPK
-%     1: linprog (Matlab Optimization Toolbox)
+%     0: GLPK (glpklp)
+%     1: Matlab Optimization Toolbox (linprog)
+%     2: CPLEX (cplexlp)
 %     (default: 0)
 %
 %   dispval: controls the output printed to the console
@@ -65,25 +66,47 @@ function [flux_vec, success, status]= CNAoptimizeFlux(cnap, constraints, c_macro
 
 error(nargchk(1, 5, nargin));
 
+flux_vec= NaN;
+success= false;
+status= NaN;
+
 %A# default parameters:
 cnap.local.rb= zeros(0, 2);
 cnap.local.c_makro= cnap.macroDefault;
 cnap.local.takelp= 0; %A# GLPK as default because it comes with CNA
 cnap.local.dispval= 0;
 
+if(nargin<5)
+	dispval=0;
+else
+	cnap.local.dispval= dispval;
+end
+if(nargin<4)
+	solver=0;
+else
+      if(~ismember(solver,[0,1,2]))
+	   disp('Solver must be 0, 1, or 2.');
+           return;
+      end
+      cnap.local.takelp= solver;
+end
+if(nargin>2)
+    cnap.local.c_makro= c_macro;
+end
+
 if nargin > 1
   constraints= reshape(constraints, length(constraints), 1);
   cnap.local.rb= find(~isnan(constraints));
   cnap.local.rb(:, 2)= constraints(cnap.local.rb);
-  if nargin > 2
-    cnap.local.c_makro= c_macro;
-    if nargin > 3
-      cnap.local.takelp= solver;
-      if nargin > 4
-        cnap.local.dispval= dispval;
-      end
-    end
-  end
+else
+  constraints=[];
+end
+
+LPavail=LP_solver_availability(true);
+if(LPavail(solver+1)==false)
+       	solvers={'GLPK (glpk)','MATLAB (linprog)','CPLEX (cplexlp)'};
+       	disp(['Solver ',solvers{solver+1},' not found. Please check whether you have porperly installed the toolbox and added the path!']);
+       	return;
 end
 
 cnap= optimize_flux(cnap);

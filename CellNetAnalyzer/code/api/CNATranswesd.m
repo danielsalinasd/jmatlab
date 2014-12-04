@@ -8,7 +8,7 @@ function [graph] = CNATranswesd(graph,epsilon,fullcheck,pathexact,acyclic,maxpat
 %     Klamt S, Flassig R, Sundmacher K. 2010. TRANSWESD: inferring
 %     cellular networks with transitive reduction. Bioinfomatics 26:2160-2168.
 %
-% Usage: [graph] = CNATranswesd(graph,epsilon,fullcheck,pathexact)
+% Usage: [graph] = CNATranswesd(graph,epsilon,fullcheck,pathexact,maxpathl)
 %
 % In contrast to most CNA API functions, this function does
 % not require a CNA project variable. A mandatory argument is 
@@ -23,11 +23,11 @@ function [graph] = CNATranswesd(graph,epsilon,fullcheck,pathexact,acyclic,maxpat
 % The other three arguments are optional:
 %  epsilon: confidence factor. An edge from i to k with weight w 
 %    can be explained by a path from i to k with weight z
-%    (and is therefore deleted) if z<w*epsilon. Default: 1.
+%    (and is therefore deleted) if z<w*epsilon. Default: 0.95.
 %    Here the length of a path is computed as the maximum weight of all its edges. 
 %    For further explanations see reference given above.
 %  fullcheck: whether all path lengths have to be recalculated after
-%    removing an edge (1) or not (0). Default: 0.95.
+%    removing an edge (1) or not (0). Default: 1.
 %  pathexact: whether path lengths have to be calculated exactly (1)
 %    or approximately (0). Default: 1.
 %  acyclic: if 1, only edges between nodes from different components

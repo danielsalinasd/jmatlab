@@ -66,15 +66,23 @@
 %                   0 - No scaling.
 %                   1 - Equilibration scaling.
 %                   2 - Geometric mean scaling, then equilibration scaling.
+%                   3 - Geometric then Equilibrium scaling 
+%                   4 - Round to nearest power of 2 scaling
 %
 %           dual (default: 0). Dual simplex option:
 %                   0 - Do not use the dual simplex.
 %                   1 - If initial basic solution is dual feasible, use
 %                       the dual simplex.
+%                   2- Use two phase dual simplex, or if primal simplex 
+%                       if dual fails
 %
 %           price (default: 1). Pricing option (for both primal and dual simplex):
 %                   0 - Textbook pricing.
 %                   1 - Steepest edge pricing.
+%   
+%           r_test (default: 1). Ratio test Technique:
+%                   0 - stardard (textbook)
+%                   1 - Harris's two-pass ratio test
 %   
 %           round (default: 0). Solution rounding option:
 % 
@@ -90,37 +98,56 @@
 %           itcnt (default: 200). Output frequency, in iterations.  
 %                 This parameter specifies how frequently the solver sends 
 %                 information about the solution to the standard output.
+%
+%           presol (default: 1). If this flag is set, the routine 
+%                  lpx_simplex solves the problem using the built-in LP presolver. 
+%                  Otherwise the LP presolver is not used.
+%
+%           lpsolver (default: 1) Select which solver to use.
+%                  If the problem is a MIP problem this flag will be ignored.
+%                   1 - Revised simplex method.
+%                   2 - Interior point method.
+%                   3 - Simplex method with exact arithmatic.                       
 % 
 %           branch (default: 2). Branching heuristic option (for MIP only):
 %                   0 - Branch on the first variable.
 %                   1 - Branch on the last variable.
-%                   2 - Branch using a heuristic by Driebeck and Tomlin.
+%                   2 - Branch on the most fractional variable.
+%                   3 - Branch using a heuristic by Driebeck and Tomlin.
 %
 %           btrack (default: 2). Backtracking heuristic option (for MIP only):
 %                   0 - Depth first search.
 %                   1 - Breadth first search.
-%                   2 - Backtrack using the best projection heuristic.
-% 
-%           presol (default: 1). If this flag is set, the routine 
-%                  lpx_simplex solves the problem using the built-in LP presolver. 
-%                  Otherwise the LP presolver is not used.
-%        
-%           usecuts (default: 1). If this flag is set, the
-%                  routine lpx_intopt generates and adds cutting planes to
-%                  the MIP problem in order to improve its LP relaxation
-%                  before applying the branch&bound method (Only Gomory's
-%                  mixed integer cuts are implemented).
-% 
-%           lpsolver (default: 1) Select which solver to use.
-%                    If the problem is a MIP problem this flag will be ignored.
-%                       1 - Revised simplex method.
-%                       2 - Interior point method.
+%                   2 - best local bound
+%                   3 - Backtrack using the best projection heuristic.
 %
+%           pprocess (default: 2) Pre-processing technique option ( for MIP only ):
+%                   0 - disable preprocessing
+%                   1 - perform preprocessing for root only
+%                   2 - perform preprocessing for all levels
+%        
+%           usecuts (default: 1). ( for MIP only ):
+%                  glp_intopt generates and adds cutting planes to
+%                  the MIP problem in order to improve its LP relaxation
+%                  before applying the branch&bound method 
+%                   0 -> all cuts off
+%                   1 -> Gomoy's mixed integer cuts
+%                   2 -> Mixed integer rounding cuts
+%                   3 -> Mixed cover cuts
+%                   4 -> Clique cuts
+%                   5 -> all cuts
+%
+%           binarize (default: 0 ) Binarizeation option ( for mip only ):
+%               ( used only if presolver is enabled )
+%                   0 -> do not use binarization
+%                   1 -> replace general integer variables by binary ones
+% 
 %           save (default: 0). If this parameter is nonzero save a copy of 
 %                the original problem to file. You can specify the 
-%                file name and format by using the 'savefilename' and 'savefiletype' 
-%                parameters (see in String Parameters Section here below).
-%                If previous parameters are not defined the original problem 
+%                file name and format by using the 'savefilename' and 
+%                'savefiletype' parameters (see in String Parameters Section 
+%                here below).
+%                If previous parameters are not defined, the original problem 
 %                is saved with CPLEX LP format in the default file "outpb.lp".
 %
 %           mpsinfo (default: 1) If this is set, 
@@ -212,6 +239,13 @@
 %                  It is not recommended that you change this parameter 
 %                  unless you have a detailed understanding of its purpose.
 %
+%           mipgap (default: 0.0) The relative mip gap tolerance.  If the 
+%                  relative mip gap for currently known best integer feasible 
+%                  solution falls below this tolerance, the solver terminates 
+%                  the search.  This allows obtaining suboptimal interger 
+%                  feasible solutions if solving the problem to optimality 
+%                  takes too long.
+%
 %         String Parameters:
 %           savefilename (default: "outpb"). Specify the name to use to 
 %                        save the original problem. MEX interface looks for 
@@ -241,29 +275,29 @@
 %          If an error occurs, status will contain one of the following
 %          codes.
 %          Simplex method:
-%               101  invalid basis
-%               102  singular matrix
-%               103  ill-conditioned matrix
-%               104  invalid bounds
-%               105  solver failed
-%               106  objective lower limit reached
-%               107  objective upper limit reached
-%               108  iteration limit exceeded
-%               109  time limit exceeded
-%               110  no primal feasible solution
+%               101 invalid basis
+%               102 singular matrix
+%               103 ill-conditioned matrix
+%               104 invalid bounds
+%               105 solver failed
+%               106 objective lower limit reached
+%               107 objective upper limit reached
+%               108 iteration limit exceeded
+%               109 time limit exceeded
+%               110 no primal feasible solution
+%               111 no dual feasible solution
 %
-%          Interior point method, mixed integer problem:
-%               204  Unable to start the search.
-%               205  Objective function lower limit reached.
-%               206  Objective function upper limit reached.
-%               207  Iterations limit exhausted.
-%               208  Time limit exhausted.
-%               209  No feasible solution.
-%               210  Numerical instability.
-%               211  Problems with basis matrix.
-%               212  No convergence (interior).
-%               213  No primal feasible solution (LP presolver).
-%               214  No dual feasible solution (LP presolver).
+%          Mixed integer problem, interior point method:
+%               204 incorrect bounds
+%               205 solver failure
+%               209 time limit exceeded
+%               210 no primal feasible solution
+%               212 missing basis
+%               214 MIP gap tolerance reached
+%               305 problem with no rows/columsn
+%               308 iteration limit exceeded
+%               316 very slow convergence/divergence
+%               317 numerical instability in solving Newtonian system
 % 
 % extra = A data structure containing the following fields:
 %           lambda - Dual variables.
@@ -294,6 +328,8 @@
 %
 % Copyright 2005-2007 Nicolo' Giorgetti
 % Email: Nicolo' Giorgetti <giorgetti __at __ ieee.org>
+% updated by Niels Klitgord March 2009
+% Email: Niels Klitgord <niels __at__ bu.edu>
 
 % This file is part of GLPKMEX.
 %
@@ -319,18 +355,29 @@ function [xopt,fmin,status,extra] = glpk (c,a,b,lb,ub,ctype,vartype,sense,param)
 
 % If there is no input output the version and syntax
 if (nargin < 3 || nargin > 9)
-    disp('GLPK Matlab interface. Version: 2.4');
+    disp('GLPK Matlab interface. Version: 2.11');
     disp('(C) 2001-2007, Nicolo'' Giorgetti.');
+    disp('Maintained by Niels Klitgord');
+    disp('last updated Sept 6, 2011');
     disp(' ');
     disp('Syntax: [xopt,fopt,status,extra]=glpk(c,a,b,lb,ub,ctype,vartype,sense,param)');
+    disp('try help glpk for more information');
     return;
 end
 
+%% begin with some error checking
 if (all(size(c) > 1) || ~isreal(c) || ischar(c))
     error('C must be a real vector');
 end
+
+% clears glpkcc mex function from memory to deal with param bug
+% this is because params not specificly set default to the last used rather
+% than internal defaults for some reason....
+clear glpkcc;
+
 nx = length (c);
-% Force column vector.
+
+% 1) Force column vector.
 c = c(:);
 
 % 2) Matrix constraint
@@ -339,8 +386,7 @@ if (isempty(a))
 end
 [nc, nxa] = size(a);
 if (~isreal(a) || nxa ~= nx)
-    tmp=sprintf('A must be a real valued %d by %d matrix', nc, nx);
-    error(tmp);
+    error('A must be a real valued %d by %d matrix', nc, nx);
     return;
 end
 
@@ -349,8 +395,7 @@ if (isempty(b))
     error('B cannot be an empty vector');
 end
 if (~isreal(b) || length(b) ~= nc)
-    tmp=sprintf('B must be a real valued %d by 1 vector', nc);
-    error (tmp);
+    error ('B must be a real valued %d by 1 vector', nc);
     return;
 end
 
@@ -359,8 +404,7 @@ if (nargin > 3)
     if (isempty(lb))
         lb = repmat(-Inf, nx, 1);
     elseif (~isreal(lb) || all(size(lb) > 1) || length(lb) ~= nx)
-        tmp=sprintf('LB must be a real valued %d by 1 column vector', nx);
-        error (tmp);
+        error ('LB must be a real valued %d by 1 column vector', nx);
         return;
     end
 else
@@ -370,14 +414,13 @@ end
 % 5) Vector with the upper bound of each variable
 if (nargin > 4)
     if (isempty(ub))
-        ub = repmat(Inf, nx, 1);
+        ub = Inf(nx, 1);
     elseif (~isreal(ub) || all(size(ub) > 1) || length(ub) ~= nx)
-        tmp=sprintf('UB must be a real valued %d by 1 column vector', nx);
-        error (tmp);
+        error ('UB must be a real valued %d by 1 column vector', nx);
         return;
     end
 else
-    ub = repmat(Inf, nx, 1);
+    ub = Inf(nx, 1);
 end
 
 % 6) Sense of each constraint
@@ -385,8 +428,7 @@ if (nargin > 5)
     if (isempty (ctype))
         ctype = repmat('U', nc, 1);
     elseif (~ischar(ctype) || all(size(ctype) > 1) || length(ctype) ~= nc)
-        tmp=sprintf('CTYPE must be a char valued vector of length %d', nc);
-        error(tmp);
+        error('CTYPE must be a char valued vector of length %d', nc);
         return;
     else
        for i=1:length(ctype)
@@ -397,8 +439,7 @@ if (nargin > 5)
              case {'l','L'}, % do nothing
              case {'d','D'}, % do nothing
              otherwise
-                tmp=sprintf('CTYPE must contain only F, U, S, L, or D');
-                error(tmp);
+                error('CTYPE must contain only F, U, S, L, or D');
           end
        end
     end
@@ -411,8 +452,7 @@ if (nargin > 6)
     if isempty(vartype)
         vartype = repmat('C', nx, 1);
     elseif (~ischar(vartype) || all(size(vartype) > 1) || length (vartype) ~= nx)
-        tmp=sprintf('VARTYPE must be a char valued vector of length %d', nx);
-        error(tmp);
+        error('VARTYPE must be a char valued vector of length %d', nx);
         return;
     else
        for i=1:length(vartype)
@@ -421,8 +461,7 @@ if (nargin > 6)
              case {'i','I'}, % do nothing
              case {'b','B'}, % do nothing
              otherwise
-                tmp=sprintf('VARTYPE must contain only C, I or B');
-                error(tmp);
+                error('VARTYPE must contain only C, I or B');
           end
        end
     end
@@ -436,8 +475,7 @@ if (nargin >7)
     if isempty(sense)
         sense=1;
     elseif (ischar(sense) || all(size(sense) > 1) || ~isreal(sense))
-        tmp=sprintf('SENSE must be an integer value');
-        error(tmp);
+        error('SENSE must be an integer value');
     elseif sense>=0
         sense=1;
     else
@@ -453,7 +491,7 @@ if (nargin > 8)
         error('PARAM must be a structure');
     end
 else
-   if str2double(version('-release'))<14
+   if str2double(version('-release'))<36
       param =struct;
    else
       param = struct([]);

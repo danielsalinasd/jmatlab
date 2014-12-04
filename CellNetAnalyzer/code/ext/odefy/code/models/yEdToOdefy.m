@@ -68,7 +68,7 @@ elseif ~hypergraph
 end
 
 % model name
-[pathstr, name, ext, versn] = fileparts(file) ;
+[pathstr, name] = fileparts(file) ;
 modelname = name;
 
 xDoc = xmlread(file);

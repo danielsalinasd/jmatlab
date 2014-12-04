@@ -9,8 +9,7 @@ function [minFlux,maxFlux,success,status] = CNAfluxVariability(cnap,reacval,macr
 %
 % Given a mass-flow project (with or without GUI) and a set of predefined
 % fluxes this function determines the range of feasible fluxes for each 
-% reaction by solving linear optimization  problems (Flux Variability 
-% Analysis; requires MATLAB optimization toolbox).
+% reaction by solving linear optimization  problems.
 %
 % Input: 
 %   cnap: (mandatory) is a CellNetAnalyzer (mass-flow) project variable.
@@ -41,8 +40,9 @@ function [minFlux,maxFlux,success,status] = CNAfluxVariability(cnap,reacval,macr
 %     (default: cnap.macroDefault)
 %
 %  solver: selects the LP solver
-%     0: GLPK
-%     1: linprog (Matlab Optimization Toolbox)
+%     0: GLPK (glpk function)
+%     1: MATLAB Optimization Toolbox (linprog function)
+%     2: CPLEX (cplexlp function)
 %     (default: 0)
 %
 %
@@ -71,12 +71,12 @@ function [minFlux,maxFlux,success,status] = CNAfluxVariability(cnap,reacval,macr
 
 if(nargin<4)
    solver=0;
-   if(nargin<3)
+end
+if(nargin<3 || isempty(macromol))
 	macromol=cnap.macroDefault;
-	if(nargin<2)
-		reacval=nan(cnap.numr,1)
-	end
-   end
+end
+if(nargin<2 || isempty(reacval))
+	reacval=nan(cnap.numr,1);
 end
 
 minFlux= reacval;
@@ -90,38 +90,55 @@ if(~any(isnan(reacval)))
 	return;
 end
 
+LPavail=LP_solver_availability(true);
+if(LPavail(solver+1)==false)
+	solvers={'GLPK (glpk)','MATLAB (linprog)','CPLEX (cplexlp)'};
+	disp(['Solver ',solvers{solver+1},' not found. Please check whether you have porperly installed the toolbox and added the path!']);
+	return;
+end
+
 if(solver==1)
+ objfuncblank=zeros(cnap.numr,1);
  for i=1:cnap.numr
      % reset objective function
-     cnap.objFunc=zeros(cnap.numr,1);
+     cnap.objFunc=objfuncblank;
 
     if isnan(reacval(i))
          % maximization
          cnap.objFunc(i)= -1;
          [maxiVec_aux,success,status]=CNAoptimizeFlux(cnap,reacval,macromol,solver,0);
-         if(~success)
-                disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
+         if(status==-3)
+		maxFlux(i)=inf;
+		success=1;
+	 elseif(status~=1)
+                disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
                 cnap.objFunc=objold;
                 return;
+	else
+         	maxFlux(i)=maxiVec_aux(i);
+
         end
          % minimization
          cnap.objFunc(i)= 1;
          [miniVec_aux,success,status]=CNAoptimizeFlux(cnap,reacval,macromol,solver,0);
-         if(~success)
-                disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
+         if(status==-3)
+		minFlux(i)=-inf;
+		success=1;
+	 elseif(status~=1)
+                disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
                 cnap.objFunc=objold;
                 return;
+	else
+         	minFlux(i)=miniVec_aux(i);
         end
 
-         minFlux(i)=miniVec_aux(i);
-         maxFlux(i)=maxiVec_aux(i);
      end
 
  end
 
- cnap.objFunc=objold;
+cnap.objFunc=objold;
 
-else 	%% Fast solving with warm start
+elseif solver==0 || solver==2	%% GLPK (with warm start) or CPLEX
 
 	t=initsmat(cnap.stoichMat,cnap.mue,cnap.macroComposition,macromol,cnap.specInternal);
 	if(isempty(t))
@@ -153,67 +170,152 @@ else 	%% Fast solving with warm start
 	param.lpsolver=1;
 
 	objfuncblank=zeros(numel(rn),1);
-
-	%Kaltstart
 	objfunc=objfuncblank;
 
-	objfunc(1)=1;
-	[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype);
-  	if status ~= 5
-		success=0;
-       	        disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
-		return;
-  	end
-  	minFlux(rn(1))=res(1);
+	if(solver==0) %GLPK
+		%Kaltstart
+		objfunc(1)=1;
 
-	objfunc(1)=-1;
-	[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype);
-  	if status ~= 5
-		success=0;
-       	        disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
-		return;
-  	end
-  	maxFlux(rn(1))=res(1);
-
-	for i=2:numel(rn) 	%% Warmstart
-		objfunc=objfuncblank;
-		objfunc(i)=1;
-		[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype,1,param);
-  		if status ~= 5
+		[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype);
+  		if status==6
+			minFlux(rn(1))=-inf;
+		elseif status==5
+  			minFlux(rn(1))=res(1);
+		else
 			success=0;
-       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
-			return;
-  		end
-		%[res,fminval,status]= linprog(objfunc,NB_A,NB_b,tn,bb,LB,UB,[],opts);
-		%if status ~= 1
-		%	success=0;
-		%       	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
-		%	return;
-		%end
-
-  		minFlux(rn(i))=res(i);
-
-		objfunc(i)=-1;
-		[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype,1,param);
-  		if status ~= 5
-			success=0;
-       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
+       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
 			return;
   		end
 
-		%[res,fminval,status]= linprog(objfunc,NB_A,NB_b,tn,bb,LB,UB,[],opts);
-		%if status ~= 1
-		%	success=0;
-		%      	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded.']);
-		%	return;
-		%end
+		objfunc(1)=-1;
+		[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype);
+  		if status==6
+  			maxFlux(rn(1))=inf;
+		elseif status==5
+  			maxFlux(rn(1))=res(1);
+		else
+			success=0;
+       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
+			return;
+  		end
 
-  		maxFlux(rn(i))=res(i);
+		for i=2:numel(rn) 	%% Warmstart
+			objfunc=objfuncblank;
+			objfunc(i)=1;
+			[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype,1,param);
+  			if status==6
+				minFlux(rn(i))=-inf;
+			elseif status==5
+	  			minFlux(rn(i))=res(i);
+			else
+				success=0;
+       		        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
+				return;
+  			end
+
+			objfunc(i)=-1;
+			[res,fminval,status]= glpk(objfunc, tn, bb, LB, UB, ctype, vtype,1,param);
+  			if status==6
+  				maxFlux(rn(i))=inf;
+			elseif status==5
+  				maxFlux(rn(i))=res(i);
+			else
+				success=0;
+       		        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent.']);
+				return;
+  			end
+		end
+
+	else %CPLEX
+		%Kaltstart
+%		objfunc(1)=1;
+%
+%		[res,fminval,status,output]= cplexlp(objfunc, [],[],tn, bb, LB, UB);
+%  		if status ~= 1
+%			success=0;
+%       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded. See the following CPLEX ouput message:']);
+%			output
+%			return;
+%  		end
+%  		minFlux(rn(1))=res(1);
+%
+%		objfunc(1)=-1;
+%		[res,fminval,status,output]= cplexlp(objfunc, [],[],tn, bb, LB, UB);
+%  		if status ~= 1
+%			success=0;
+%       	        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded. See the following CPLEX ouput message:']);
+%			output
+%			return;
+%  		end
+%  		maxFlux(rn(1))=res(1);
+%
+%		for i=2:numel(rn) 	%% Warmstart?!
+%i
+%			objfunc=objfuncblank;
+%			objfunc(i)=1;
+%			[res,fminval,status,output]= cplexlp(objfunc, [],[],tn, bb, LB, UB,res);
+%  			if status ~= 1
+%				success=0;
+%       		        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded. See the following CPLEX ouput message:']);
+%				output
+%				return;
+%  			end
+%  			minFlux(rn(i))=res(i);
+%
+%			objfunc(i)=-1;
+%			[res,fminval,status,output]= cplexlp(objfunc, [],[],tn, bb, LB, UB,res);
+%	  		if status ~= 1
+%				success=0;
+%       		        	disp(['Warning: linear optimization failed. Solver status: ',num2str(status),'. Scenario is probably overly stringent or unbounded. See the following CPLEX ouput message:']);
+%				output
+%				return;
+%  			end
+%  			maxFlux(rn(i))=res(i);
+%		end
+
+		cgp= Cplex();
+        	cgp.Param.emphasis.numerical.Cur= 1;
+        	cgp.Model.A= tn;
+        	cgp.Model.ub= UB;
+	        cgp.Model.lb= LB;
+       	 	cgp.Model.lhs= bb;
+        	cgp.Model.rhs= bb;
+        	cgp.Model.obj=objfuncblank';
+        	cgp.DisplayFunc=[];
+        	fva= {cgp.Model.lb, cgp.Model.ub};
+        	sense= {'minimize', 'maximize'};
+
+        	for i= 1:numel(rn)
+          		cgp.Model.obj(:)= 0;
+          		cgp.Model.obj(i)= 1;
+          		for j= 1:2
+            			cgp.Model.sense= sense{j};
+            			x= cgp.solve();
+            			if x.status ~= 1 && x.status~=2
+              				fprintf('status %d %s for %s, %d\n', x.status,x.statusstring, sense{j}, i);
+					success=0;
+					disp('Exit!');
+					return;
+            			elseif x.status == 1
+              				fva{j}(i)= x.objval;
+				else  %x.status=2=UNBOUNDED
+					if j==1
+              					fva{j}(i)=-inf;
+					else
+              					fva{j}(i)=inf;
+					end
+            			end
+          		end
+		end
+
+  		minFlux(rn)=fva{1};
+  		maxFlux(rn)=fva{2};
 	end
 end
 
 minFlux(abs(minFlux)<cnap.epsilon)=0;
 maxFlux(abs(maxFlux)<cnap.epsilon)=0;
+
 
 
 

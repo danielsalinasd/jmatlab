@@ -653,7 +653,7 @@ while(~ready)
 						errval=1;
        		                 		return;
        		         		end
-					smat(curmet,reacuis)=reactflag*stoichcoeff;
+					smat(curmet,reacuis)= smat(curmet,reacuis) + reactflag*stoichcoeff;
 					notfound=0;
 					tofindnr(find(tofindnr==6))=[];
                     			if(reactflag==-1)

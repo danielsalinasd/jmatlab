@@ -14,12 +14,12 @@
 %    Note that such a structure is returned by the CalculateFluxModes 
 %    function.
 %
-% SAMPLE
+% Sample:
 %    efms = SignToDouble(mnet, 1:10);
 %                             The first ten sign EFMs are converted into
 %                             real EFMs with double precision flux values.
 %
-% PARAMETERS
+% Parameters:
 %       mnet                  The mentioned structure containing 
 %                             stoichiometrix matrix, EFMs and reaction 
 %                             lower bounds. Such a structure is returned by
@@ -41,16 +41,18 @@
 %       [tol]       optional  Tolerance value to treat as zero,
 %                             default is 1e-10
 %
-% RETURNS                     A matrix (r, e) with r = size(mnet.stoich, 1),
+% Returns                     A matrix (r, e) with r = size(mnet.stoich, 1),
 %                             i.e. r is the number of reactions, and 
 %                             e = length(efmIndex), i.e. the number of EFMs
 %                             to process
 %
 % Version:
-%    18-Aug-2009/V4.4.4    mt  compiled w. Java 1.5, SVD for SignToDouble
-%    18-Aug-2009/V4.4.2    mt  performance improvements, better tracing
-%    27-Oct-2008/V2.33.00  mt  package refactoring, use QR for SignToDouble
-%    10-Oct-2008/V2.32.00  mt  initial version
+%	=========================================================================
+%	efmtool version 4.7.1, 2009-12-04 18:29:52
+%	Copyright (c) 2009, Marco Terzer, Zurich, Switzerland
+%	This is free software, !!! NO WARRANTY !!!
+%	See LICENCE.txt for redistribution conditions
+%	=========================================================================
 %
 function efms = SignToDouble(mnet, efmIndex, how, tol)
 

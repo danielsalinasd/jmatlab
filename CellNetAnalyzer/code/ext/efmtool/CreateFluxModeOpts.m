@@ -191,24 +191,12 @@
 %                     installation path
 %
 % Version:
-%    18-Aug-2009/V4.4.4    mt  compiled w. Java 1.5, SVD for SignToDouble
-%    18-Aug-2009/V4.4.2    mt  performance improvements, better tracing
-%    19-Mar-2009/V4.2.1    mt  merged with polco, new sort-out-core option
-%    27-Oct-2008/V2.33.00  mt  package refactoring, use QR for SignToDouble
-%    10-Oct-2008/V2.32.00  mt  fixed logging within MATLAB
-%    04-Sep-2008/V2.31.20  mt  fixed 'memory' option & deletion of efm files
-%    03-Sep-2008/V2.31.10  mt  added 'sign-only' option
-%    28-Aug-2008/V2.31.01  mt  new doc version for options
-%    28-Aug-2008/V2.31.00  mt  backward compat.: recompiled with Java 1.5
-%    21-Aug-2008/V2.30.00  mt  speed-up (tree shortening) and added new
-%                              'parse-only' option, version now in sync
-%                              with java cvs tag
-%    04-Aug-2008/V1.20.00  mt  various fixes (rev sign, opt arg, ...), 
-%                              switched off duplicate gene compression
-%    05-May-2008/V1.12.00  mt  added parse-only option
-%    25-Apr-2008/V1.11.00  mt  added tmpdir/impl options, out core impl
-%    01-Apr-2008/V1.10.00  mt  added options suppress/enforce
-%    12-Feb-2008/V1.00.00  mt  initial version (online at paper submission)
+%	=========================================================================
+%	efmtool version 4.7.1, 2009-12-04 18:29:52
+%	Copyright (c) 2009, Marco Terzer, Zurich, Switzerland
+%	This is free software, !!! NO WARRANTY !!!
+%	See LICENCE.txt for redistribution conditions
+%	=========================================================================
 %
 function opts = CreateFluxModeOpts(varargin)
     for i=1:2:length(varargin)

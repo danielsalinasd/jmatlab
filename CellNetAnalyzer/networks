@@ -14,6 +14,6 @@ Tiny;Figure;Example	figex	1
 Escherichia;coli;(Small)	coli_small	1
 Human;Red;Blood;Cell;(Small)	redbloodcell1024/	1
 T;cell;model;(Small)	Tcellsmall	2
-rJune	june	1
-rJune1	C:ecolix	ecolix	1
-g	g	1
+Chondrocyte_vtest	Chondrocyte	1
+Chondrocyte_vtest2	Chondrocyte_vtest2	1
+Chondrocyte_v1	Central	1

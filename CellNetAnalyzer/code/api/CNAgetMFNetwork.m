@@ -10,7 +10,7 @@ function [mfn]= CNAgetMFNetwork(cnap,biocomp)
 % Input: cnap is a CNA mass-flow project structure   
 %        biocomp is (cnap.nummac,1) vector defining the biomass
 %                composition; if macromolecules have not been
-%		 defined in the project set biocomp=[]
+%		 defined in the project set biocomp=[] (Default:cnap.macroDefault);
 % 
 % Output: mfn: all those fields of the mass-flow project cnap are copied 
 %	  into mfn that define the topology and related parameters of the 
@@ -29,6 +29,10 @@ function [mfn]= CNAgetMFNetwork(cnap,biocomp)
 % See also manual for field names of a mass-flow project structure in CNA.
 
 mfn=[];
+
+if(nargin<2)
+	biocomp=cnap.macroDefault;
+end
 
 if(~isfield(cnap,'type'))
 	disp(['Field ''type'' not defined. Not a CellNetAnalyzer project.']);

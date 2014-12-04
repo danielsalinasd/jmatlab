@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
 	=====================================================
-	efmtool version 4.4.4, 2009-08-18 18:41:34
+	efmtool version 4.7.1, 2009-12-04 18:30:05
 	Copyright (c) 2009, Marco Terzer, Zurich, Switzerland
 	This is free software, !!! NO WARRANTY !!!
 	See LICENCE.txt for redistribution conditions
@@ -537,7 +537,7 @@
 			<reactions-to-enforce value="${-enforce[*,*]}"/>
 			<reactions-no-split value="${-nosplit[*,*]}"/>
 			<temp-dir name="${-tmpdir[1]:/local/tmp}"/>
-			<progress partition="${-progress[1]:100}" type="file"/>
+			<progress type="${-progress[1]:none}" partition="${-progress[2]:100}"/>
 			<flag value="${-flag[1]:}"/> <!-- e.g. recover:/local/tmp/2008 -->
 			<distribute ref="efm-distribute-config"/>
 		</config>
@@ -545,7 +545,7 @@
 	<referable name="welcome-message">
 		<usage>
 			<line value="====================================================="/>
-			<line value="efmtool version 4.4.4, 2009-08-18 18:41:34"/>
+			<line value="efmtool version 4.7.1, 2009-12-04 18:30:05"/>
 			<line value="Copyright (c) 2009, Marco Terzer, Zurich, Switzerland"/>
 			<line value="This is free software, !!! NO WARRANTY !!!"/>
 			<line value="See LICENCE.txt for redistribution conditions"/>
@@ -561,7 +561,7 @@
 			<line value="calculates elementary flux modes (efms) for the network."/>
 			<line value=""/>
 			<line value="usage: "/>
-			<line value="   ${app-name} -kind reaction-list -in file"/>
+			<line value="   ${app-name} -kind reaction-list -in file -out format [file]"/>
 			<line value="              parses a reaction list (text file), where each line contains"/>
 			<line value="              2 quoted strings (separated by whitespace) containing reaction"/>
 			<line value="              name and definition"/>
@@ -601,6 +601,16 @@
 			<line value="   ${app-name} --help"/>
 			<line value="              display this help message"/>
 			<line value=""/>
+			<line value="output formats: "/>
+			<line value="   -out null                           no output"/>
+			<line value="   -out count                          count only"/>
+			<line value="   -out text-boolean file.txt          textual 0/1 values, header row and column, support information only"/>
+			<line value="   -out text-doubles file.txt          textual double values, header row and column, tab separated"/>
+			<line value="   -out binary-boolean file.bin        binary encoded values, support information only"/>
+			<line value="   -out binary-doubles file.bin        binary encoded double values"/>
+			<line value="   -out matlab file.mat                double values, one or multiple matlab .mat file(s)"/>
+			<line value="   -out matlab-directions file.mat     sign values (as int8), one or multiple matlab .mat file(s)"/>
+			<line value=""/>
 			<line value="notes: "/>
 			<line value="   - use quotes for arguments containing white space"/>
 			<line value="   - reaction definitions used in 'excel' and 'reaction-list' have the form"/>
@@ -627,7 +637,7 @@
 	<config name="default">
 		<app>
 			<name value="efmtool"/>
-			<version value="4.4.4"/>
+			<version value="4.7.1"/>
 			<copyright value="Copyright (c) 2009, Marco Terzer, Zurich, Switzerland"/>
 		</app>
 		<logging>
